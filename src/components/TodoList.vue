@@ -1,4 +1,5 @@
 <template>
+  <AddTodo @add-todo="addTodo" />
   <TodoItem
     v-for="todo in todos"
     :key="todo.id"
@@ -17,27 +18,26 @@
 <script>
 import { ref } from 'vue'
 import TodoItem from './TodoItem'
+import AddTodo from './AddTodo'
+import axios from 'axios'
 export default {
   name: 'TodoList',
-  components: { TodoItem },
+  components: { TodoItem, AddTodo },
   setup() {
-    const todos = ref([
-      {
-        id: 1,
-        title: 'Viec 1',
-        completed: false
-      },
-      {
-        id: 2,
-        title: 'Viec 2',
-        completed: false
-      },
-      {
-        id: 3,
-        title: 'Viec 3',
-        completed: false
+    const todos = ref([])
+
+    const getAllTodos = async () => {
+      try {
+        const res = await axios.get(
+          'https://jsonplaceholder.typicode.com/todos?_limit=5/'
+        )
+        todos.value = res.data
+      } catch (error) {
+        console.log(error)
       }
-    ])
+    }
+
+    getAllTodos()
 
     const markComplete = id => {
       todos.value = todos.value.map(todo => {
@@ -49,13 +49,31 @@ export default {
     // muốn chọc vào object todo để thay đổi các thuộc tính trong các thành phần có trong todos, ta sẽ phải truy cập vào ref với cú pháp
     // todos.value
 
-    const deleteTodo = id => {
-      todos.value = todos.value.filter(todo => todo.id !== id)
+    const deleteTodo = async id => {
+      try {
+        await axios.delete(`https://jsonplaceholder.typicode.com/todos/${id}`)
+        todos.value = todos.value.filter(todo => todo.id !== id)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+
+    const addTodo = async newTodo => {
+      try {
+        const res = await axios.post(
+          `https://jsonplaceholder.typicode.com/todos`,
+          newTodo
+        )
+        todos.value.push(res.data)
+      } catch (error) {
+        console.log(error)
+      }
     }
     return {
       todos,
       markComplete,
-      deleteTodo
+      deleteTodo,
+      addTodo
     }
     /**
      * Ở đây, setup đóng vai trò khởi tạo trạng thái ban đầu của component TodoItem
